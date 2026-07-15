@@ -64,3 +64,8 @@ Paths are set via placeholder variables documented in each notebook's config cel
 - **The input data are not included.** DestinE LRA output, ERA5, ESA-CCI, and EN4 datasets reside on DKRZ Levante and are subject to their own licences; the notebooks cannot be re-executed without access to equivalent data. Set the placeholder variables to your own copies.
 - All embedded outputs and figures document the analysis as originally performed; printed paths in outputs show sanitised placeholders (e.g. `<LRA_ROOT>`).
 
+## Notes
+
+- The original climate datasets are not included because of their size and access restrictions.
+- Absolute HPC paths have been replaced with placeholder variables for portability.
+- These notebooks are provided as examples of scientific analysis workflows and are intended primarily as a software engineering and research portfolio.
