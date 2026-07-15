@@ -18,11 +18,11 @@ DestinE Climate DT models run at storm-resolving resolution; their LRA output (r
 
 | Notebook | Purpose |
 |---|---|
-| `notebooks/comLRA_t2m.ipynb` | 2 m temperature: global-mean series, decadal trend maps vs. ERA5, detrended variability, seasonal-cycle removal, zonal means. |
-| `notebooks/comLRA_tcc.ipynb` | Total cloud cover: annual/multi-year means, model−ESA-CCI difference maps, Taylor diagram, 1990–2014 trends. |
-| `notebooks/comLRA_thetao.ipynb` | Ocean potential temperature: domain-mean time–depth (Hovmöller) anomalies for 3 models + EN4. |
-| `notebooks/comLRA_si.ipynb` | Sea-ice concentration & thickness: multi-year consolidation and climatological comparison maps. |
-| `notebooks/comLRA_SLC.ipynb` | Surface energy closure: process-space consistency of radiation, clouds, and turbulent fluxes. |
+| `comLRA_t2m.ipynb` | 2 m temperature: global-mean series, decadal trend maps vs. ERA5, detrended variability, seasonal-cycle removal, zonal means. |
+| `comLRA_tcc.ipynb` | Total cloud cover: annual/multi-year means, model−ESA-CCI difference maps, Taylor diagram, 1990–2014 trends. |
+| `comLRA_thetao.ipynb` | Ocean potential temperature: domain-mean time–depth (Hovmöller) anomalies for 3 models + EN4. |
+| `comLRA_si.ipynb` | Sea-ice concentration & thickness: multi-year consolidation and climatological comparison maps. |
+| `comLRA_SLC.ipynb` | Surface energy closure: process-space consistency of radiation, clouds, and turbulent fluxes. |
 
 Each notebook starts with **"Why this notebook matters"** and **"Key techniques demonstrated"** sections, then is self-contained and follows the same pattern:
 
@@ -34,7 +34,7 @@ Each notebook starts with **"Why this notebook matters"** and **"Key techniques 
 
 ## Example outputs
 
-The notebooks retain their executed outputs, so representative figures can be viewed directly inside each notebook. No external `figures/` directory is uploaded. Representative outputs include:
+The notebooks retain their executed outputs, so representative figures can be viewed directly inside each notebook. Representative outputs include:
 
 - 2 m temperature trends (models vs. ERA5)
 - Arctic sea-ice concentration climatology (March & September)
