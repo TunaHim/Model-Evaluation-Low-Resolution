@@ -1,0 +1,16 @@
+name: destine-lra-eval
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - xarray
+  - netcdf4
+  - numpy
+  - scipy
+  - matplotlib
+  - cartopy
+  - xesmf
+  - astropy-healpix
+  - astropy
+  - dask
+  - jupyterlab
