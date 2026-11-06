@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How it is built · LRA model evaluation</title>
+<style>
+:root{--bg:#f9f9f7;--surface:#fcfcfb;--ink:#0b0b0b;--ink2:#52514e;--muted:#898781;--line:#e1e0d9;--axis:#c3c2b7;
+--blue:#2a78d6;--blue-soft:#cde2fb;--orange:#eb6834;--orange-soft:#fbe0d4;--aqua:#1baf7a;--aqua-soft:#d3f1e5;--yellow:#eda100;--yellow-soft:#fcefc9;--violet:#4a3aa7;--violet-soft:#e2def7;}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0d0d0d;--surface:#1a1a19;--ink:#ffffff;--ink2:#c3c2b7;--muted:#898781;--line:#2c2c2a;--axis:#383835;
+--blue:#3987e5;--blue-soft:#17324f;--orange:#d95926;--orange-soft:#3d2216;--aqua:#199e70;--aqua-soft:#12342a;--yellow:#c98500;--yellow-soft:#3a2d0c;--violet:#9085e9;--violet-soft:#2a2550;}}
+:root[data-theme="dark"]{--bg:#0d0d0d;--surface:#1a1a19;--ink:#ffffff;--ink2:#c3c2b7;--muted:#898781;--line:#2c2c2a;--axis:#383835;
+--blue:#3987e5;--blue-soft:#17324f;--orange:#d95926;--orange-soft:#3d2216;--aqua:#199e70;--aqua-soft:#12342a;--yellow:#c98500;--yellow-soft:#3a2d0c;--violet:#9085e9;--violet-soft:#2a2550;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:1060px;margin:0 auto;padding:28px 16px 64px}
+h1{font-size:26px;margin:0 0 4px}
+h2{font-size:19px;margin:40px 0 8px}
+p.lead{color:var(--ink2);margin:0 0 20px;max-width:760px}
+p{max-width:780px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:12px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.grid .card{margin:0}
+.card h3{font-size:15px;margin:0 0 6px}
+.card p{margin:0;color:var(--ink2);font-size:14px}
+.tag{display:inline-block;font-size:12px;padding:1px 8px;border-radius:10px;margin-bottom:6px}
+.tag.blue{background:var(--blue-soft);color:var(--blue)} .tag.orange{background:var(--orange-soft);color:var(--orange)}
+.tag.aqua{background:var(--aqua-soft);color:var(--aqua)} .tag.violet{background:var(--violet-soft);color:var(--violet)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:16px 0}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.stat b{display:block;font-size:24px;font-weight:600}
+.stat span{color:var(--ink2);font-size:13px}
+table{border-collapse:collapse;width:100%;font-size:14px;background:var(--surface)}
+th,td{border-bottom:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+th{color:var(--ink2);font-weight:600}
+td.num{text-align:right;font-variant-numeric:tabular-nums}
+.wrap{overflow-x:auto}
+svg text{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.svgbox{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px;overflow-x:auto}
+.note{color:var(--muted);font-size:13px}
+</style>
+<meta name="description" content="Data and software design of the Destination Earth Climate DT LRA multi-model evaluation.">
+<meta name="author" content="Himansu Kesari Pradhan">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232a78d6'/%3E%3Cpath d='M5 20c4-8 8-8 11 0s7 8 11 0' stroke='white' stroke-width='3' fill='none'/%3E%3C/svg%3E">
+<style>
+.sitenav{position:sticky;top:0;z-index:10;background:var(--surface,#fcfcfb);border-bottom:1px solid var(--line,#e1e0d9)}
+.sitenav div{max-width:1100px;margin:0 auto;padding:10px 16px;display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;font:14px system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.sitenav b{margin-right:8px;color:var(--ink,#0b0b0b)}
+.sitenav a{color:var(--ink2,#52514e);text-decoration:none}
+.sitenav a:hover,.sitenav a.here{color:var(--blue,#2a78d6)}
+.sitefoot{border-top:1px solid var(--line,#e1e0d9);margin-top:32px;background:var(--surface,#fcfcfb);color:var(--ink2,#52514e)}
+.sitefoot div.in{max-width:1100px;margin:0 auto;padding:18px 16px 26px;display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px 28px;font:13px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.sitefoot b{display:block;color:var(--ink,#0b0b0b);margin-bottom:3px}
+.sitefoot a{color:var(--blue,#2a78d6)}
+.sitefoot p{margin:0}
+</style>
+</head>
+<body>
+<!-- site:nav --><nav class="sitenav"><div><b>LRA model evaluation</b><a href="engineering_overview.html" class="here">How it is built</a><a href="https://github.com/TunaHim/Model-Evaluation-Low-Resolution">Code on GitHub</a></div></nav><!-- /site:nav -->
+<main>
+<h1>How the evaluation pipeline works</h1>
+<p class="lead">This page covers the data and software side of the multi-model evaluation of the Destination Earth Climate DT
+Low-Resolution Archive (LRA). It shows how monthly output from three coupled storm-resolving models is gathered from the
+HPC file system, consolidated into analysis-ready series and compared, on one common grid, with three independent
+observational references.</p>
+<div class="stats">
+  <div class="stat"><b>3 models</b><span>IFS-FESOM, IFS-NEMO and ICON from the Climate DT</span></div>
+  <div class="stat"><b>3 references</b><span>ERA5, ESA-CCI cloud and EN4.2.2 ocean</span></div>
+  <div class="stat"><b>25 years</b><span>1990–2014 of monthly LRA output</span></div>
+  <div class="stat"><b>~1° grid</b><span>r100 LRA, 180 × 360 points</span></div>
+  <div class="stat"><b>5 notebooks</b><span>t2m, cloud, ocean, sea ice, energy closure</span></div>
+  <div class="stat"><b>Levante</b><span>DKRZ HPC, where data and runs sit</span></div>
+</div>
+<h2>1. The pipeline at a glance</h2>
+<p>Data flows from left to right. Each box is one stage, and the blue text names the code or tool that does it. All five notebooks follow the same pattern.</p>
+<div class="svgbox">
+<svg viewBox="0 0 1000 300" width="100%" role="img" aria-label="Pipeline">
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+<text x="10" y="22" font-size="13" font-weight="600" fill="var(--ink2)">1 · SOURCE</text>
+<rect x="10" y="34" width="178" height="256" rx="8" fill="var(--blue-soft)" stroke="var(--blue)"/>
+<text x="22" y="56" font-size="13" font-weight="600" fill="var(--ink)">LRA archive</text>
+<text x="22" y="78" font-size="12" fill="var(--ink2)">Climate DT r100 monthly</text>
+<text x="22" y="94" font-size="12" fill="var(--ink2)">NetCDF on Levante</text>
+<text x="22" y="118" font-size="12" fill="var(--ink2)">IFS-FESOM, IFS-NEMO,</text>
+<text x="22" y="134" font-size="12" fill="var(--ink2)">ICON, historical runs</text>
+<text x="22" y="158" font-size="12" fill="var(--ink2)">many files per</text>
+<text x="22" y="174" font-size="12" fill="var(--ink2)">model and variable</text>
+<text x="22" y="262" font-size="11" fill="var(--blue)">LRA_ROOT/&lt;MODEL&gt;/</text>
+<text x="22" y="276" font-size="11" fill="var(--blue)">historical-*/r100/</text>
+<line x1="188" y1="150" x2="208" y2="150" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#arrow)"/>
+<text x="210" y="22" font-size="13" font-weight="600" fill="var(--ink2)">2 · CONSOLIDATE</text>
+<rect x="210" y="34" width="178" height="256" rx="8" fill="var(--surface)" stroke="var(--axis)"/>
+<text x="222" y="56" font-size="13" font-weight="600" fill="var(--ink)">Analysis-ready series</text>
+<text x="222" y="78" font-size="12" fill="var(--ink2)">open many monthly</text>
+<text x="222" y="94" font-size="12" fill="var(--ink2)">files as one dataset</text>
+<text x="222" y="110" font-size="12" fill="var(--ink2)">lazy, dask-backed</text>
+<text x="222" y="134" font-size="12" fill="var(--ink2)">select 1990–2014</text>
+<text x="222" y="150" font-size="12" fill="var(--ink2)">write one series file</text>
+<text x="222" y="166" font-size="12" fill="var(--ink2)">per model + variable</text>
+<text x="222" y="262" font-size="11" fill="var(--blue)">xr.open_mfdataset</text>
+<text x="222" y="276" font-size="11" fill="var(--blue)">→ EVA_DIR/*.nc</text>
+<line x1="389" y1="150" x2="409" y2="150" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#arrow)"/>
+<text x="411" y="22" font-size="13" font-weight="600" fill="var(--ink2)">3 · ALIGN</text>
+<rect x="411" y="34" width="178" height="256" rx="8" fill="var(--aqua-soft)" stroke="var(--aqua)"/>
+<text x="423" y="56" font-size="13" font-weight="600" fill="var(--ink)">One common grid</text>
+<text x="423" y="78" font-size="12" fill="var(--ink2)">ERA5 0.25° → model 1°</text>
+<text x="423" y="94" font-size="12" fill="var(--ink2)">by xarray interp</text>
+<text x="423" y="118" font-size="12" fill="var(--ink2)">ESA-CCI → 1° with</text>
+<text x="423" y="134" font-size="12" fill="var(--ink2)">xesmf bilinear,</text>
+<text x="423" y="150" font-size="12" fill="var(--ink2)">periodic in longitude</text>
+<text x="423" y="174" font-size="12" fill="var(--ink2)">checks: grid, NaNs, units</text>
+<text x="423" y="262" font-size="11" fill="var(--blue)">ds.interp(...)</text>
+<text x="423" y="276" font-size="11" fill="var(--blue)">xe.Regridder(...)</text>
+<line x1="589" y1="150" x2="609" y2="150" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#arrow)"/>
+<text x="611" y="22" font-size="13" font-weight="600" fill="var(--ink2)">4 · DIAGNOSE</text>
+<rect x="611" y="34" width="178" height="256" rx="8" fill="var(--violet-soft)" stroke="var(--violet)"/>
+<text x="623" y="56" font-size="13" font-weight="600" fill="var(--ink)">Statistics</text>
+<text x="623" y="78" font-size="12" fill="var(--ink2)">per-gridpoint trends</text>
+<text x="623" y="94" font-size="12" fill="var(--ink2)">(linear regression)</text>
+<text x="623" y="110" font-size="12" fill="var(--ink2)">detrended variability</text>
+<text x="623" y="126" font-size="12" fill="var(--ink2)">seasonal cycle removed</text>
+<text x="623" y="142" font-size="12" fill="var(--ink2)">zonal and domain means</text>
+<text x="623" y="158" font-size="12" fill="var(--ink2)">Taylor statistics</text>
+<text x="623" y="262" font-size="11" fill="var(--blue)">scipy.stats.linregress</text>
+<text x="623" y="276" font-size="11" fill="var(--blue)">derived NetCDF</text>
+<line x1="790" y1="150" x2="810" y2="150" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#arrow)"/>
+<text x="812" y="22" font-size="13" font-weight="600" fill="var(--ink2)">5 · RESULTS</text>
+<rect x="812" y="34" width="178" height="256" rx="8" fill="var(--surface)" stroke="var(--axis)"/>
+<text x="824" y="56" font-size="13" font-weight="600" fill="var(--ink)">Figures</text>
+<text x="824" y="78" font-size="12" fill="var(--ink2)">global trend maps</text>
+<text x="824" y="94" font-size="12" fill="var(--ink2)">difference maps</text>
+<text x="824" y="110" font-size="12" fill="var(--ink2)">Hovmöller (time–depth)</text>
+<text x="824" y="126" font-size="12" fill="var(--ink2)">Taylor diagram</text>
+<text x="824" y="142" font-size="12" fill="var(--ink2)">sea-ice climatologies</text>
+<text x="824" y="158" font-size="12" fill="var(--ink2)">energy closure plots</text>
+<text x="824" y="276" font-size="11" fill="var(--blue)">cartopy · matplotlib</text>
+</svg>
+</div>
+<h2>2. Data sources</h2>
+<div class="wrap">
+<table>
+<thead><tr><th>Dataset</th><th>What it gives</th><th>How it is read</th></tr></thead>
+<tbody>
+<tr><td>DestinE Climate DT LRA (r100)</td><td>Monthly IFS-FESOM, IFS-NEMO and ICON output, 1990–2014, ~1° regular grid</td><td>NetCDF from the project folders on DKRZ Levante, opened lazily with <code>xarray</code> + <code>dask</code></td></tr>
+<tr><td>ERA5 (ECMWF / C3S)</td><td>2 m temperature reference, 1940–2024 at 0.25°</td><td>One NetCDF file, cut to 1990–2014 and interpolated to the model grid</td></tr>
+<tr><td>ESA-CCI Cloud</td><td>Total cloud fraction reference</td><td>NetCDF, regridded with <code>xesmf</code> bilinear (periodic)</td></tr>
+<tr><td>EN4.2.2 (Met Office)</td><td>Ocean potential temperature profiles, objective analysis</td><td>NetCDF, used for time–depth domain means</td></tr>
+</tbody>
+</table>
+</div>
+<h2>3. Problems the pipeline had to solve</h2>
+<div class="grid">
+  <div class="card"><span class="tag orange">data volume</span><h3>Many files per model</h3>
+  <p>Each model stores its monthly output as many separate NetCDF files per variable. <code>open_mfdataset</code> treats them as one lazy dataset, and the consolidated series is written once, so later steps never touch the raw files again.</p></div>
+  <div class="card"><span class="tag orange">grids</span><h3>Different grids</h3>
+  <p>ERA5 is 0.25° and ESA-CCI has its own grid. Every reference is brought to the model's 1° grid before any difference or statistic is computed.</p></div>
+  <div class="card"><span class="tag orange">checks</span><h3>Check before compare</h3>
+  <p>After regridding, the notebook prints whether latitude and longitude match exactly, counts NaNs and checks units (K vs °C), so a silent mismatch cannot reach a figure.</p></div>
+  <div class="card"><span class="tag blue">longitude wrap</span><h3>No seam at 0°</h3>
+  <p>The <code>xesmf</code> regridder is built with <code>periodic=True</code>, so values near the dateline or Greenwich are not lost or smeared.</p></div>
+  <div class="card"><span class="tag blue">reuse</span><h3>Derived files</h3>
+  <p>Trends, standard deviations and consolidated series are saved as NetCDF in one evaluation folder, so plots can be redrawn without recomputing.</p></div>
+  <div class="card"><span class="tag blue">portability</span><h3>No hard-coded paths</h3>
+  <p>All data locations sit in one config cell as documented placeholders. A conda <code>environment.yml</code> (Python 3.10, xesmf, dask) pins the software.</p></div>
+</div>
+<h2>4. How the work is organised</h2>
+<div class="wrap">
+<table>
+<thead><tr><th>Notebook</th><th>Variable and reference</th><th>Main technique</th></tr></thead>
+<tbody>
+<tr><td><code>comLRA_t2m.ipynb</code></td><td>2 m temperature vs ERA5</td><td>global-mean series, decadal trend maps, detrended variability, zonal means</td></tr>
+<tr><td><code>comLRA_tcc.ipynb</code></td><td>Total cloud cover vs ESA-CCI</td><td>mean and difference maps, Taylor diagram, 1990–2014 trends</td></tr>
+<tr><td><code>comLRA_thetao.ipynb</code></td><td>Ocean potential temperature vs EN4</td><td>domain-mean time–depth (Hovmöller) anomalies</td></tr>
+<tr><td><code>comLRA_si.ipynb</code></td><td>Sea-ice concentration and thickness</td><td>multi-year consolidation, March and September climatologies</td></tr>
+<tr><td><code>comLRA_SLC.ipynb</code></td><td>Surface energy closure</td><td>process-space link of radiation, clouds and turbulent fluxes</td></tr>
+</tbody>
+</table>
+</div>
+<p>Each notebook starts with a "Why this notebook matters" and a "Key techniques demonstrated" section, keeps its executed
+outputs so the figures can be read on GitHub, and follows the same five steps: configure, load and consolidate, compute, compare, plot.</p>
+<h2>5. What could come next</h2>
+<div class="wrap">
+<table>
+<thead><tr><th>Idea</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Shared helper module</td><td>The load, regrid and check steps repeat across notebooks. Moving them into one tested Python module would remove copies.</td></tr>
+<tr><td>Tests and CI</td><td>There are no automated tests yet. Small synthetic grids would let the regridding and trend code be checked on every push.</td></tr>
+<tr><td>Cloud-native store</td><td>Writing the consolidated series as chunked Zarr would let them be read remotely without the HPC file system.</td></tr>
+<tr><td>Workflow runner</td><td>A small Snakemake or Make file could rebuild all derived files in order when new LRA years arrive.</td></tr>
+</tbody>
+</table>
+</div>
+<h2>6. In one sentence</h2>
+<div class="card"><p style="color:var(--ink);font-size:15px">Monthly LRA output from three Climate DT models is read lazily from the HPC file system, consolidated into one series per model and variable, brought onto one common 1° grid with the references and checked, and then turned into trends, variability, Taylor statistics and maps for 1990–2014.</p></div>
+</main>
+<!-- site:foot --><footer class="sitefoot"><div class="in">
+<div><b>LRA model evaluation</b><p>Research notebooks by Himansu Kesari Pradhan, 2026. The input data are not included. Code under the
+<a href="https://github.com/TunaHim/Model-Evaluation-Low-Resolution/blob/main/LICENSE">MIT licence</a>; source on
+<a href="https://github.com/TunaHim/Model-Evaluation-Low-Resolution">GitHub</a>. Page built 6 November 2026.</p></div>
+<div><b>Data credits</b><p>Climate DT LRA: Destination Earth (ECMWF, ESA, EUMETSAT). ERA5: Copernicus Climate Change Service. ESA Climate Change Initiative Cloud. EN4.2.2: Met Office Hadley Centre.</p></div>
+<div><b>More</b><p><a href="https://github.com/TunaHim/Model-Evaluation-Low-Resolution#readme">README</a> · <a href="https://github.com/TunaHim/Model-Evaluation-Low-Resolution/issues">Questions and comments</a></p></div>
+</div></footer><!-- /site:foot -->
+</body>
+</html>
