@@ -4,6 +4,10 @@ Multi-model evaluation of  from the Low-Resolution Archive (LRA): three coupled 
 
 Developed on the DKRZ **Levante** HPC system.
 
+## How it is built
+
+A one-page overview of the data pipeline, the problems it solves and how the code is organised: [How it is built](https://tunahim.github.io/Model-Evaluation-Low-Resolution/engineering_overview.html).
+
 ## Scientific purpose
 
 DestinE Climate DT models run at storm-resolving resolution; their LRA output (r100, ~1° regular grid) enables systematic multi-decadal evaluation. These notebooks assess whether the three models reproduce observed climate signals consistently across independent components of the climate system:
