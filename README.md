@@ -59,6 +59,17 @@ Paths are set via placeholder variables documented in each notebook's config cel
 | `EN4_DIR` | Extracted EN4.2.2 monthly ocean analysis files |
 | `FESOM_DATA_ROOT`, `MN5_DIR` | Auxiliary data used only in optional side checks |
 
+## Data sources and access
+
+| Data | Format | Access |
+|---|---|---|
+| DestinE Climate DT Low-Resolution Archive (LRA): IFS-FESOM, IFS-NEMO, ICON, historical 1990–2014, r100 (~1°) monthly | NetCDF | DKRZ Levante file system (DestinE project access); not redistributable |
+| ERA5 reanalysis (2 m temperature) | NetCDF, regular lat/lon | Copernicus Climate Data Store (C3S) |
+| ESA-CCI cloud fraction (1982–2016) | NetCDF | ESA Climate Change Initiative data portal |
+| EN4.2.2 ocean analysis | NetCDF | UK Met Office Hadley Centre |
+
+Paths are set once in each notebook's config cell (see *Expected input data*), so the notebooks can be pointed at another copy of the same datasets.
+
 ## Limitations
 
 - **The input data are not included.** DestinE LRA output, ERA5, ESA-CCI, and EN4 datasets reside on DKRZ Levante and are subject to their own licences; the notebooks cannot be re-executed without access to equivalent data. Set the placeholder variables to your own copies.
@@ -69,3 +80,7 @@ Paths are set via placeholder variables documented in each notebook's config cel
 - The original climate datasets are not included because of their size and access restrictions.
 - Absolute HPC paths have been replaced with placeholder variables for portability.
 - These notebooks are provided as examples of scientific analysis workflows and are intended primarily as a software engineering and research portfolio.
+
+## Licence
+
+Code: MIT, see [LICENSE](LICENSE). Data: see *Data sources and access*; third-party data keep their own terms.
